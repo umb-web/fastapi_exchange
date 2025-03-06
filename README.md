@@ -1,1 +1,1 @@
-# FastAPI money exchange
+# FastAPI Currency Exchange
