@@ -25,7 +25,6 @@ document.getElementById("exchange_form").addEventListener('submit', async functi
 		}
 
 		let data = await response.json();
-		console.log(data)
 		const result = document.getElementById("result_p")
 		result.innerHTML = `${data.total} ${destinated_currency}`
 
