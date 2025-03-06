@@ -11,49 +11,60 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def home():
-    return "Hola"
-
-
-@app.get("/item/{id}")
-def query_path_params(id: int, name: str):
-    return f"Hello {name}, your id is {id}"
-
-
-def convertir_moneda(amount: float, from_currency: str, to_currency: str):
-    tasas_cambio = {
-        ("USD", "EUR"): 0.52,
-        ("EUR", "USD"): 1.099,
-        ("USD", "COP"): 4000,
-        ("COP", "USD"): 0.0025,
+def convert_currency(amount: float, from_currency: str, to_currency: str):
+    exchange_rates = {
+        ("USD", "EUR"): 0.92,
+        ("EUR", "USD"): 1.08,
+        ("USD", "COP"): 4104,
+        ("COP", "USD"): 0.00024,
+        ("USD", "GBP"): 0.78,
+        ("GBP", "USD"): 1.28,
+        ("EUR", "COP"): 4441,
+        ("COP", "EUR"): 0.00023,
+        ("EUR", "GBP"): 0.85,
+        ("GBP", "EUR"): 1.18,
+        ("COP", "GBP"): 0.00019,
+        ("GBP", "COP"): 5299,
     }
 
-    tasa = tasas_cambio.get((from_currency, to_currency))
-    return round(amount * tasa) if tasa else None
+    if from_currency == to_currency:
+        return amount
+
+    rate = exchange_rates.get((from_currency, to_currency))
+    if rate is None:
+        raise ValueError(f"exchange not available {from_currency} a {to_currency}")
+
+    return amount * rate
 
 
-@app.post("/convertidor")
-async def convertidor(request: Request):
-    body = await request.json()
-    amount = body.get("amount")
-    from_currency = body.get("from_currency")
-    to_currency = body.get("to_currency")
+@app.post("/exchange_currency")
+async def exchange(request: Request):
 
-    if amount is None or from_currency is None or to_currency is None:
-        raise HTTPException(status_code=400, detail="Faltan datos")
+    try:
+        body = await request.json()
+        amount = body.get("amount")
+        from_currency = body.get("from_currency")
+        to_currency = body.get("to_currency")
 
-    resultado = convertir_moneda(amount, from_currency, to_currency)
+        if amount is None or from_currency is None or to_currency is None:
+            raise HTTPException(status_code=400, detail="data missing")
 
-    if resultado is None:
-        raise HTTPException(status_code=400, detail="Moneda no soportada")
+        total = convert_currency(amount, from_currency, to_currency)
 
-    return JSONResponse(
-        content={
-            "cantidad": amount,
-            "moneda_origen": from_currency,
-            "moneda_destino": to_currency,
-            "resultado": resultado,
-        },
-        status_code=200,
-    )
+        if total is None:
+            raise HTTPException(status_code=400, detail="currency not available")
+
+        return JSONResponse(
+            content={
+                "amount": amount,
+                "from_currency": from_currency,
+                "to_currency": to_currency,
+                "total": total,
+            },
+            status_code=200,
+        )
+
+    except HTTPException as http_error:
+        raise http_error
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
