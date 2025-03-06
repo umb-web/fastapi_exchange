@@ -1,0 +1,51 @@
+<html>
+
+<body>
+	<h1>Convetidor de monedas</h1>
+	<label for="cantidad">Monto en pesos:</label>
+	<input type="number" id="cantidad" name="cantidad">
+	<label for="moneda">Moneda:</label>
+
+
+	<form id="form_convertidor">
+		<select id="moneda" name="moneda">
+			<option value="USD">Dolar</option>
+			<option value="EUR">Euro</option>
+			<option value="GBP">Libra</option>
+
+		</select>
+		<button type="submit">Enviar</button>
+	</form>
+
+
+	<h1>Resultado</h1>
+	<p id="resultado">res</p>
+</body>
+
+<script>
+	document.getElementById("form_convertidor").addEventListener('submit', async function (event) {
+		event.preventDefault()
+		let amount = document.getElementById("cantidad").value
+		let currency = document.getElementById("moneda").value
+
+
+		const endpoint = "http://127.0.0.1:8000/convertidor"
+
+
+		const response = await fetch(endpoint, {
+			method: "POST",
+			headers: {
+				"Content-type": "application/json"
+			},
+			body: JSON.stringify({
+				amount: Number(amount),
+				to_currency: currency
+			})
+		})
+
+		let data = await response.json()
+	})
+
+</script>
+
+</html>
